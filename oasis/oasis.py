@@ -19,7 +19,21 @@ class MarketNode:
             "RTPD": "PRC_RTPD_LMP",
         }
 
+    def __repr__(self):
+        return f"MarketNode(market='{self.market}', node='{self.node}', tz='{self.tz}')"
+
     def get_lmps(self, start, end):
+        """Gets Locational Market Prices (LMPs) for a given pair of start and end dates
+
+        Parameters:
+
+        start (datetime.datetime): start date
+        end: (datetime.datetime): end date
+
+        Returns:
+
+        (pandas.DataFrame): Pandas dataframe containing the LMPs for given period
+        """
 
         url = "http://oasis.caiso.com/oasisapi/SingleZip?"
 
@@ -58,6 +72,17 @@ class MarketNode:
         return df
 
     def get_month_lmps(self, year, month):
+        """Helper method to get LMPs for a complete month
+
+        Parameters:
+
+        year(int): year of LMPs desired
+        month(int): month of LMPs desired
+
+        Returns:
+
+        (pandas.DataFrame): Pandas dataframe containing the LMPs for given month
+        """
 
         start = datetime(year, month, 1)
         end = start + relativedelta(months=1)
