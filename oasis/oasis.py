@@ -57,11 +57,9 @@ class MarketNode:
 
         return df
 
-    def get_month_lmps(
-        self, year, month, market="DAM", node="DLAP_SCE-APND", tz="America/Los_Angeles"
-    ):
+    def get_month_lmps(self, year, month):
 
         start = datetime(year, month, 1)
         end = start + relativedelta(months=1)
 
-        return get_lmps(start, end, market=market, node=node, tz=tz)
+        return self.get_lmps(start, end)
