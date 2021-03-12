@@ -16,18 +16,9 @@ class Node:
     def __repr__(self):
         return f"MarketNode(node='{self.node}')"
 
-    def get_lmps(self, start, end, market="DAM", tz="America/Los_Angeles"):
-        """Gets Locational Market Prices (LMPs) for a given pair of start and end dates
-
-        Parameters:
-
-        start (datetime.datetime): start date
-        end (datetime.datetime): end date
-        market (str): market for prices; must be "DAM", "RTM", or "RTPD"
-
-        Returns:
-
-        (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
+    def _get_string_parameters(self, start, end, market, tz):
+        """
+        helper function to assemble string parameters for http request
         """
 
         market_mapping = {
@@ -38,8 +29,6 @@ class Node:
 
         if market not in market_mapping.keys():
             raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
-
-        url = "http://oasis.caiso.com/oasisapi/SingleZip?"
 
         tz_ = pytz.timezone(tz)
         fmt = "%Y%m%dT%H:%M-0000"
@@ -56,9 +45,14 @@ class Node:
             "resultformat": 6,
         }
 
-        str_params = "&".join(f"{k}={v}" for k, v in params.items())
+        return "&".join(f"{k}={v}" for k, v in params.items())
 
-        # print(url + str_params)
+    def _get_request_content(
+        self, str_params, url="http://oasis.caiso.com/oasisapi/SingleZip?"
+    ):
+        """
+        helper function to get http request and handle exceptions
+        """
 
         try:
             r = requests.get(url, params=str_params, timeout=10)
@@ -77,8 +71,29 @@ class Node:
             print(e)
 
         headers = r.headers["content-disposition"]
+
         if re.search(r"\.xml\.zip;$", headers):
             raise Exception("No data available for this query.")
+
+        return r
+
+    def get_lmps(self, start, end, market="DAM", tz="America/Los_Angeles"):
+        """Gets Locational Market Prices (LMPs) for a given pair of start and end dates
+
+        Parameters:
+
+        start (datetime.datetime): start date
+        end (datetime.datetime): end date
+        market (str): market for prices; must be "DAM", "RTM", or "RTPD"
+
+        Returns:
+
+        (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
+        """
+
+        str_params = self._get_string_parameters(start, end, market=market, tz=tz)
+
+        r = self._get_request_content(str_params)
 
         with io.BytesIO() as buffer:
             try:
