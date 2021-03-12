@@ -8,21 +8,14 @@ import requests
 from dateutil.relativedelta import relativedelta
 
 
-class MarketNode:
-    def __init__(self, market="DAM", node="DLAP_SCE-APND", tz="America/Los_Angeles"):
-        self.market = market
+class Node:
+    def __init__(self, node):
         self.node = node
-        self.tz = tz
-        self.market_mapping = {
-            "DAM": "PRC_LMP",
-            "RTM": "PRC_INTVL_LMP",
-            "RTPD": "PRC_RTPD_LMP",
-        }
 
     def __repr__(self):
-        return f"MarketNode(market='{self.market}', node='{self.node}', tz='{self.tz}')"
+        return f"MarketNode(node='{self.node}')"
 
-    def get_lmps(self, start, end):
+    def get_lmps(self, start, end, market="DAM", tz="America/Los_Angeles"):
         """Gets Locational Market Prices (LMPs) for a given pair of start and end dates
 
         Parameters:
@@ -37,14 +30,20 @@ class MarketNode:
 
         url = "http://oasis.caiso.com/oasisapi/SingleZip?"
 
-        tz_ = pytz.timezone(self.tz)
+        tz_ = pytz.timezone(tz)
         fmt = "%Y%m%dT%H:%M-0000"
         start_str = tz_.localize(start).astimezone(pytz.UTC).strftime(fmt)
         end_str = tz_.localize(end).astimezone(pytz.UTC).strftime(fmt)
 
+        market_mapping = {
+            "DAM": "PRC_LMP",
+            "RTM": "PRC_INTVL_LMP",
+            "RTPD": "PRC_RTPD_LMP",
+        }
+
         params = {
-            "market_run_id": self.market,
-            "queryname": self.market_mapping.get(self.market, "PRC_LMP"),
+            "market_run_id": market,
+            "queryname": market_mapping.get(market, "PRC_LMP"),
             "startdatetime": start_str,
             "enddatetime": end_str,
             "version": 1,
@@ -107,3 +106,27 @@ class MarketNode:
         end = start + relativedelta(months=1)
 
         return self.get_lmps(start, end)
+
+    @classmethod
+    def SP15(cls):
+        return cls("TH_SP15_GEN-APND")
+
+    @classmethod
+    def NP15(cls):
+        return cls("TH_NP15_GEN-APND")
+
+    @classmethod
+    def ZP26(cls):
+        return cls("TH_ZP26_GEN-APND")
+
+    @classmethod
+    def SCEDLAP(cls):
+        return cls("DLAP_SCE-APND")
+
+    @classmethod
+    def PGAEDLAP(cls):
+        return cls("DLAP_PGAE-APND")
+
+    @classmethod
+    def SDGEDLAP(cls):
+        return cls("DLAP_SDGE-APND")
