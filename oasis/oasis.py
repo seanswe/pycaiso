@@ -54,20 +54,39 @@ class MarketNode:
 
         str_params = "&".join(f"{k}={v}" for k, v in params.items())
 
-        r = requests.get(url, params=str_params)
-
         try:
-            z = zipfile.ZipFile(io.BytesIO(r.content))
-        except:
-            raise zipfile.BadZipFile("Invalid zip file")
+            r = requests.get(url, params=str_params, timeout=10)
+            r.raise_for_status()
+            print("Success")
 
-        csv = z.open(z.namelist()[0])
+        except requests.exceptions.HTTPError as eh:
+            print("HTTP Error:", eh)
 
-        df = (
-            pd.read_csv(csv, parse_dates=[2])
-            .sort_values(["OPR_DT", "OPR_HR"])
-            .reset_index(drop=True)
-        )
+        except requests.exceptions.ConnectionError as ec:
+            print("Connection Error:", ec)
+
+        except requests.exceptions.Timeout as et:
+            print("Timeout:", et)
+
+        except requests.exceptions.RequestException as e:
+            print(e)
+
+        with io.BytesIO() as buffer:
+            try:
+                buffer.write(r.content)
+                buffer.seek(0)
+                z = zipfile.ZipFile(buffer)
+
+            except zipfile.BadZipFile as e:
+                print("Bad zip file", e)
+
+            else:
+                csv = z.open(z.namelist()[0])
+                df = (
+                    pd.read_csv(csv, parse_dates=[2])
+                    .sort_values(["OPR_DT", "OPR_HR"])
+                    .reset_index(drop=True)
+                )
 
         return df
 
