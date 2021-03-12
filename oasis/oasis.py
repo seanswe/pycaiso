@@ -1,6 +1,7 @@
 import io
 import zipfile
 from datetime import datetime, timedelta
+import re
 
 import pandas as pd
 import pytz
@@ -22,11 +23,21 @@ class Node:
 
         start (datetime.datetime): start date
         end (datetime.datetime): end date
+        market (str): market for prices; must be "DAM", "RTM", or "RTPD"
 
         Returns:
 
-        (pandas.DataFrame): Pandas dataframe containing the LMPs for given period
+        (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
         """
+
+        market_mapping = {
+            "DAM": "PRC_LMP",
+            "RTM": "PRC_INTVL_LMP",
+            "RTPD": "PRC_RTPD_LMP",
+        }
+
+        if market not in market_mapping.keys():
+            raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
 
         url = "http://oasis.caiso.com/oasisapi/SingleZip?"
 
@@ -35,15 +46,9 @@ class Node:
         start_str = tz_.localize(start).astimezone(pytz.UTC).strftime(fmt)
         end_str = tz_.localize(end).astimezone(pytz.UTC).strftime(fmt)
 
-        market_mapping = {
-            "DAM": "PRC_LMP",
-            "RTM": "PRC_INTVL_LMP",
-            "RTPD": "PRC_RTPD_LMP",
-        }
-
         params = {
             "market_run_id": market,
-            "queryname": market_mapping.get(market, "PRC_LMP"),
+            "queryname": market_mapping[market],
             "startdatetime": start_str,
             "enddatetime": end_str,
             "version": 1,
@@ -53,10 +58,11 @@ class Node:
 
         str_params = "&".join(f"{k}={v}" for k, v in params.items())
 
+        # print(url + str_params)
+
         try:
             r = requests.get(url, params=str_params, timeout=10)
             r.raise_for_status()
-            print("Success")
 
         except requests.exceptions.HTTPError as eh:
             print("HTTP Error:", eh)
@@ -69,6 +75,10 @@ class Node:
 
         except requests.exceptions.RequestException as e:
             print(e)
+
+        headers = r.headers["content-disposition"]
+        if re.search(r"\.xml\.zip;$", headers):
+            raise Exception("No data available for this query.")
 
         with io.BytesIO() as buffer:
             try:
