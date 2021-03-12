@@ -28,7 +28,7 @@ class MarketNode:
         Parameters:
 
         start (datetime.datetime): start date
-        end: (datetime.datetime): end date
+        end (datetime.datetime): end date
 
         Returns:
 
