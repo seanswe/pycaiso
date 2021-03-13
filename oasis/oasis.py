@@ -16,7 +16,9 @@ class Node:
     def __repr__(self):
         return f"MarketNode(node='{self.node}')"
 
-    def _get_string_parameters(self, start, end, market, tz):
+    def _get_request_string(
+        self, start, end, market, tz, url="http://oasis.caiso.com/oasisapi/SingleZip?"
+    ):
         """
         helper function to assemble string parameters for http request
         """
@@ -45,17 +47,20 @@ class Node:
             "resultformat": 6,
         }
 
-        return "&".join(f"{k}={v}" for k, v in params.items())
+        str_params = "&".join(f"{k}={v}" for k, v in params.items())
 
-    def _get_request_content(
-        self, str_params, url="http://oasis.caiso.com/oasisapi/SingleZip?"
+        return url + str_params
+
+    def _get_request(
+        self,
+        request_str,
     ):
         """
         helper function to get http request and handle exceptions
         """
 
         try:
-            r = requests.get(url, params=str_params, timeout=10)
+            r = requests.get(request_str, timeout=5)
             r.raise_for_status()
 
         except requests.exceptions.HTTPError as eh:
@@ -91,9 +96,9 @@ class Node:
         (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
         """
 
-        str_params = self._get_string_parameters(start, end, market=market, tz=tz)
+        request_str = self._get_request_string(start, end, market=market, tz=tz)
 
-        r = self._get_request_content(str_params)
+        r = self._get_request(request_str)
 
         with io.BytesIO() as buffer:
             try:
