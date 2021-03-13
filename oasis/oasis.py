@@ -14,7 +14,7 @@ class Node:
         self.node = node
 
     def __repr__(self):
-        return f"MarketNode(node='{self.node}')"
+        return f"Node(node='{self.node}')"
 
     def _get_request_string(
         self, start, end, market, tz, url="http://oasis.caiso.com/oasisapi/SingleZip?"
