@@ -9,7 +9,7 @@ import requests
 from dateutil.relativedelta import relativedelta
 
 
-class OASIS:
+class RequestMixIn:
     """Base class for OASIS API calls"""
 
     def get_request_string(
@@ -86,7 +86,7 @@ class OASIS:
         return r
 
 
-class Node(OASIS):
+class Node(RequestMixIn):
     """CAISO PNode"""
 
     def __init__(self, node):
@@ -183,7 +183,7 @@ class Node(OASIS):
         return cls("DLAP_SDGE-APND")
 
 
-class Atlas(OASIS):
+class Atlas(RequestMixIn):
     """Atlas data """
 
     def get_pnodes(
