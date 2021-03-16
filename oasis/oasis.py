@@ -9,28 +9,31 @@ import requests
 from dateutil.relativedelta import relativedelta
 
 
-class Node:
-    def __init__(self, node):
-        self.node = node
+class OASIS:
+    """Base class for OASIS API calls"""
 
-    def __repr__(self):
-        return f"Node(node='{self.node}')"
-
-    def _get_request_string(
-        self, start, end, market, tz, url="http://oasis.caiso.com/oasisapi/SingleZip?"
+    def get_request_string(
+        self,
+        start,
+        end,
+        tz,
+        node=None,
+        market=None,
+        url="http://oasis.caiso.com/oasisapi/SingleZip?",
     ):
         """
-        helper function to assemble string parameters for http request
+        helper function to assemble request string
         """
 
-        market_mapping = {
+        query_mapping = {
             "DAM": "PRC_LMP",
             "RTM": "PRC_INTVL_LMP",
             "RTPD": "PRC_RTPD_LMP",
         }
 
-        if market not in market_mapping.keys():
-            raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
+        if market is not None:
+            if market not in query_mapping.keys():
+                raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
 
         tz_ = pytz.timezone(tz)
         fmt = "%Y%m%dT%H:%M-0000"
@@ -38,12 +41,12 @@ class Node:
         end_str = tz_.localize(end).astimezone(pytz.UTC).strftime(fmt)
 
         params = {
+            "queryname": query_mapping[market],
             "market_run_id": market,
-            "queryname": market_mapping[market],
             "startdatetime": start_str,
             "enddatetime": end_str,
             "version": 1,
-            "node": self.node,
+            "node": node,
             "resultformat": 6,
         }
 
@@ -51,7 +54,7 @@ class Node:
 
         return url + str_params
 
-    def _get_request(
+    def get_request(
         self,
         request_str,
     ):
@@ -82,7 +85,23 @@ class Node:
 
         return r
 
-    def get_lmps(self, start, end, market="DAM", tz="America/Los_Angeles"):
+
+class Node(OASIS):
+    """CAISO PNode"""
+
+    def __init__(self, node):
+        self.node = node
+
+    def __repr__(self):
+        return f"Node(node='{self.node}')"
+
+    def get_lmps(
+        self,
+        start,
+        end,
+        tz="America/Los_Angeles",
+        market="DAM",
+    ):
         """Gets Locational Market Prices (LMPs) for a given pair of start and end dates
 
         Parameters:
@@ -96,9 +115,11 @@ class Node:
         (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
         """
 
-        request_str = self._get_request_string(start, end, market=market, tz=tz)
+        request_str = self.get_request_string(
+            start, end, tz=tz, node=self.node, market=market
+        )
 
-        r = self._get_request(request_str)
+        r = self.get_request(request_str)
 
         with io.BytesIO() as buffer:
             try:
@@ -160,3 +181,18 @@ class Node:
     @classmethod
     def SDGEDLAP(cls):
         return cls("DLAP_SDGE-APND")
+
+
+class Atlas(OASIS):
+    """Atlas data """
+
+    def get_pnodes(
+        self,
+        start,
+        end,
+        tz,
+    ):
+
+        request_str = self.get_request_string(start, end, tz=tz)
+
+        r = self.get_request(request_str)
