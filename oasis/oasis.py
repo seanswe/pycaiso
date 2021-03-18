@@ -12,7 +12,7 @@ from dateutil.relativedelta import relativedelta
 class RequestMixIn:
     """Base class for OASIS API calls"""
 
-    def get_request_string(
+    def getRequestStr(
         self,
         start,
         end,
@@ -54,7 +54,7 @@ class RequestMixIn:
 
         return url + str_params
 
-    def get_request(
+    def getRequest(
         self,
         request_str,
     ):
@@ -115,11 +115,11 @@ class Node(RequestMixIn):
         (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
         """
 
-        request_str = self.get_request_string(
+        request_str = self.getRequestStr(
             start, end, tz=tz, node=self.node, market=market
         )
 
-        r = self.get_request(request_str)
+        r = self.getRequest(request_str)
 
         with io.BytesIO() as buffer:
             try:
@@ -183,16 +183,16 @@ class Node(RequestMixIn):
         return cls("DLAP_SDGE-APND")
 
 
-class Atlas(RequestMixIn):
-    """Atlas data """
+# class Atlas(RequestMixIn):
+#     """Atlas data """
 
-    def get_pnodes(
-        self,
-        start,
-        end,
-        tz,
-    ):
+#     def get_pnodes(
+#         self,
+#         start,
+#         end,
+#         tz,
+#     ):
 
-        request_str = self.get_request_string(start, end, tz=tz)
+#         request_str = self.getRequestStr(start, end, tz=tz)
 
-        r = self.get_request(request_str)
+#         r = self.getRequestStr(request_str)
