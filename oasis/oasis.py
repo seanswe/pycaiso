@@ -40,11 +40,23 @@ class RequestMixIn:
 
         return r
 
+    def get_UTC_string(
+        self, ts, local_tz="America/Los_Angeles", fmt="%Y%m%dT%H:%M-0000"
+    ):
+        """
+        convert local datetime.datetime to string-formatted UTC
+        """
+
+        tz_ = pytz.timezone(local_tz)
+        return tz_.localize(ts).astimezone(pytz.UTC).strftime(fmt)
+
 
 class DataFrameMixIn:
-    """MixIn to convert http request results to pandas dataframe"""
+    """
+    MixIn to convert http request results to pandas dataframe
+    """
 
-    def get_df(self, r):
+    def get_df(self, r, parse_dates=False, sort_values=None):
         with io.BytesIO() as buffer:
             try:
                 buffer.write(r.content)
@@ -56,11 +68,10 @@ class DataFrameMixIn:
 
             else:
                 csv = z.open(z.namelist()[0])
-                df = (
-                    pd.read_csv(csv, parse_dates=[2])
-                    .sort_values(["OPR_DT", "OPR_HR"])
-                    .reset_index(drop=True)
-                )
+                df = pd.read_csv(csv, parse_dates=parse_dates)
+
+                if sort_values:
+                    df = df.sort_values(sort_values).reset_index(drop=True)
 
         return df
 
@@ -75,7 +86,7 @@ class Node(RequestMixIn, DataFrameMixIn):
     def __repr__(self):
         return f"Node(node='{self.node}')"
 
-    def get_lmps(self, start, end, market="DAM", tz="America/Los_Angeles"):
+    def get_lmps(self, start, end, market="DAM"):
         """Gets Locational Market Prices (LMPs) for a given pair of start and end dates
 
         Parameters:
@@ -99,16 +110,11 @@ class Node(RequestMixIn, DataFrameMixIn):
             if market not in query_mapping.keys():
                 raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
 
-        tz_ = pytz.timezone(tz)
-        fmt = "%Y%m%dT%H:%M-0000"
-        start_str = tz_.localize(start).astimezone(pytz.UTC).strftime(fmt)
-        end_str = tz_.localize(end).astimezone(pytz.UTC).strftime(fmt)
-
         params = {
             "queryname": query_mapping[market],
             "market_run_id": market,
-            "startdatetime": start_str,
-            "enddatetime": end_str,
+            "startdatetime": self.get_UTC_string(start),
+            "enddatetime": self.get_UTC_string(end),
             "version": 1,
             "node": self.node,
             "resultformat": 6,
@@ -116,7 +122,7 @@ class Node(RequestMixIn, DataFrameMixIn):
 
         r = self.getRequest(self._url, params)
 
-        return self.get_df(r)
+        return self.get_df(r, parse_dates=[2], sort_values=["OPR_DT", "OPR_HR"])
 
     def get_month_lmps(self, year, month):
         """Helper method to get LMPs for a complete month
@@ -161,16 +167,23 @@ class Node(RequestMixIn, DataFrameMixIn):
         return cls("DLAP_SDGE-APND")
 
 
-# class Atlas(RequestMixIn):
-#     """Atlas data """
+class Atlas(RequestMixIn, DataFrameMixIn):
+    """Atlas data """
 
-#     def get_pnodes(
-#         self,
-#         start,
-#         end,
-#         tz,
-#     ):
+    def __init__(self):
+        self._url = "http://oasis.caiso.com/oasisapi/SingleZip?"
 
-#         request_str = self.getRequestStr(start, end, tz=tz)
+    def get_pnodes(self, start, end):
 
-#         r = self.getRequestStr(request_str)
+        params = {
+            "queryname": "ATL_PNODE",
+            "startdatetime": self.get_UTC_string(start),
+            "enddatetime": self.get_UTC_string(end),
+            "Pnode_type": "ALL",
+            "version": 1,
+            "resultformat": 6,
+        }
+
+        r = self.getRequest(self._url, params)
+
+        return self.get_df(r)
