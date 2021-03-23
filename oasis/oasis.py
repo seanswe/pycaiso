@@ -106,9 +106,8 @@ class Node(RequestMixIn, DataFrameMixIn):
             "RTPD": "PRC_RTPD_LMP",
         }
 
-        if market is not None:
-            if market not in query_mapping.keys():
-                raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
+        if market not in query_mapping.keys():
+            raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
 
         params = {
             "queryname": query_mapping[market],
