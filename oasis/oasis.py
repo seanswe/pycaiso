@@ -10,19 +10,83 @@ from dateutil.relativedelta import relativedelta
 
 
 class RequestMixIn:
-    """Base class for OASIS API calls"""
+    """Mixin to make http request and handle exceptions"""
 
-    def getRequestStr(
-        self,
-        start,
-        end,
-        tz,
-        node=None,
-        market=None,
-        url="http://oasis.caiso.com/oasisapi/SingleZip?",
-    ):
+    def getRequest(self, url, params):
         """
-        helper function to assemble request string
+        helper function to get http request and handle exceptions
+        """
+
+        try:
+            r = requests.get(url, params=params, timeout=5)
+            r.raise_for_status()
+
+        except requests.exceptions.HTTPError as eh:
+            print("HTTP Error:", eh)
+
+        except requests.exceptions.ConnectionError as ec:
+            print("Connection Error:", ec)
+
+        except requests.exceptions.Timeout as et:
+            print("Timeout:", et)
+
+        except requests.exceptions.RequestException as e:
+            print(e)
+
+        headers = r.headers["content-disposition"]
+
+        if re.search(r"\.xml\.zip;$", headers):
+            raise Exception("No data available for this query.")
+
+        return r
+
+
+class DataFrameMixIn:
+    """MixIn to convert http request results to pandas dataframe"""
+
+    def get_df(self, r):
+        with io.BytesIO() as buffer:
+            try:
+                buffer.write(r.content)
+                buffer.seek(0)
+                z = zipfile.ZipFile(buffer)
+
+            except zipfile.BadZipFile as e:
+                print("Bad zip file", e)
+
+            else:
+                csv = z.open(z.namelist()[0])
+                df = (
+                    pd.read_csv(csv, parse_dates=[2])
+                    .sort_values(["OPR_DT", "OPR_HR"])
+                    .reset_index(drop=True)
+                )
+
+        return df
+
+
+class Node(RequestMixIn, DataFrameMixIn):
+    """CAISO PNode"""
+
+    def __init__(self, node):
+        self.node = node
+        self._url = "http://oasis.caiso.com/oasisapi/SingleZip?"
+
+    def __repr__(self):
+        return f"Node(node='{self.node}')"
+
+    def get_lmps(self, start, end, market="DAM", tz="America/Los_Angeles"):
+        """Gets Locational Market Prices (LMPs) for a given pair of start and end dates
+
+        Parameters:
+
+        start (datetime.datetime): start date
+        end (datetime.datetime): end date
+        market (str): market for prices; must be "DAM", "RTM", or "RTPD"
+
+        Returns:
+
+        (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
         """
 
         query_mapping = {
@@ -46,99 +110,13 @@ class RequestMixIn:
             "startdatetime": start_str,
             "enddatetime": end_str,
             "version": 1,
-            "node": node,
+            "node": self.node,
             "resultformat": 6,
         }
 
-        str_params = "&".join(f"{k}={v}" for k, v in params.items())
+        r = self.getRequest(self._url, params)
 
-        return url + str_params
-
-    def getRequest(
-        self,
-        request_str,
-    ):
-        """
-        helper function to get http request and handle exceptions
-        """
-
-        try:
-            r = requests.get(request_str, timeout=5)
-            r.raise_for_status()
-
-        except requests.exceptions.HTTPError as eh:
-            print("HTTP Error:", eh)
-
-        except requests.exceptions.ConnectionError as ec:
-            print("Connection Error:", ec)
-
-        except requests.exceptions.Timeout as et:
-            print("Timeout:", et)
-
-        except requests.exceptions.RequestException as e:
-            print(e)
-
-        headers = r.headers["content-disposition"]
-
-        if re.search(r"\.xml\.zip;$", headers):
-            raise Exception("No data available for this query.")
-
-        return r
-
-
-class Node(RequestMixIn):
-    """CAISO PNode"""
-
-    def __init__(self, node):
-        self.node = node
-
-    def __repr__(self):
-        return f"Node(node='{self.node}')"
-
-    def get_lmps(
-        self,
-        start,
-        end,
-        tz="America/Los_Angeles",
-        market="DAM",
-    ):
-        """Gets Locational Market Prices (LMPs) for a given pair of start and end dates
-
-        Parameters:
-
-        start (datetime.datetime): start date
-        end (datetime.datetime): end date
-        market (str): market for prices; must be "DAM", "RTM", or "RTPD"
-
-        Returns:
-
-        (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
-        """
-
-        request_str = self.getRequestStr(
-            start, end, tz=tz, node=self.node, market=market
-        )
-
-        r = self.getRequest(request_str)
-
-        with io.BytesIO() as buffer:
-            try:
-                buffer.write(r.content)
-                buffer.seek(0)
-                z = zipfile.ZipFile(buffer)
-
-            except zipfile.BadZipFile as e:
-                print("Bad zip file", e)
-
-            else:
-                csv = z.open(z.namelist()[0])
-                df = (
-                    pd.read_csv(csv, parse_dates=[2])
-                    .sort_values(["OPR_DT", "OPR_HR"])
-                    .reset_index(drop=True)
-                )
-
-        return df
+        return self.get_df(r)
 
     def get_month_lmps(self, year, month):
         """Helper method to get LMPs for a complete month
