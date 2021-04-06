@@ -186,3 +186,38 @@ class Atlas(RequestMixIn, DataFrameMixIn):
         r = self.getRequest(self._url, params)
 
         return self.get_df(r)
+
+
+class SystemDemand(RequestMixIn, DataFrameMixIn):
+    """System Demand  """
+
+    def __init__(self):
+        self._url = "http://oasis.caiso.com/oasisapi/SingleZip?"
+
+    def get_peak_demand_forecast(self, start, end):
+
+        params = {
+            "queryname": "SLD_FCST_PEAK",
+            "startdatetime": self.get_UTC_string(start),
+            "enddatetime": self.get_UTC_string(end),
+            "version": 1,
+            "resultformat": 6,
+        }
+
+        r = self.getRequest(self._url, params)
+
+        return self.get_df(r)
+
+    def get_demand_forecast(self, start, end):
+
+        params = {
+            "queryname": "SLD_FCST",
+            "startdatetime": self.get_UTC_string(start),
+            "enddatetime": self.get_UTC_string(end),
+            "version": 1,
+            "resultformat": 6,
+        }
+
+        r = self.getRequest(self._url, params)
+
+        return self.get_df(r)
