@@ -17,7 +17,7 @@ class Oasis:
 class RequestMixIn:
     """Mixin to make http request and handle exceptions"""
 
-    def getRequest(self, url, params):
+    def get_request(self, url, params):
         """
         helper function to get http request and handle exceptions
         """
@@ -124,7 +124,7 @@ class Node(Oasis, RequestMixIn, DataFrameMixIn):
             "resultformat": 6,
         }
 
-        r = self.getRequest(self.base_url, params)
+        r = self.get_request(self.base_url, params)
 
         return self.get_df(r, parse_dates=[2], sort_values=["OPR_DT", "OPR_HR"])
 
@@ -188,7 +188,7 @@ class Atlas(Oasis, RequestMixIn, DataFrameMixIn):
             "resultformat": 6,
         }
 
-        r = self.getRequest(self.base_url, params)
+        r = self.get_request(self.base_url, params)
 
         return self.get_df(r)
 
@@ -209,7 +209,7 @@ class SystemDemand(Oasis, RequestMixIn, DataFrameMixIn):
             "resultformat": 6,
         }
 
-        r = self.getRequest(self.base_url, params)
+        r = self.get_request(self.base_url, params)
 
         return self.get_df(r)
 
@@ -223,6 +223,6 @@ class SystemDemand(Oasis, RequestMixIn, DataFrameMixIn):
             "resultformat": 6,
         }
 
-        r = self.getRequest(self.base_url, params)
+        r = self.get_request(self.base_url, params)
 
         return self.get_df(r)
