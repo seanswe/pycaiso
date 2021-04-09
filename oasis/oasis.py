@@ -9,6 +9,11 @@ import requests
 from dateutil.relativedelta import relativedelta
 
 
+class Oasis:
+    def __init__(self):
+        self.base_url = "http://oasis.caiso.com/oasisapi/SingleZip?"
+
+
 class RequestMixIn:
     """Mixin to make http request and handle exceptions"""
 
@@ -76,12 +81,12 @@ class DataFrameMixIn:
         return df
 
 
-class Node(RequestMixIn, DataFrameMixIn):
+class Node(Oasis, RequestMixIn, DataFrameMixIn):
     """CAISO PNode"""
 
     def __init__(self, node):
         self.node = node
-        self._url = "http://oasis.caiso.com/oasisapi/SingleZip?"
+        super().__init__()
 
     def __repr__(self):
         return f"Node(node='{self.node}')"
@@ -119,7 +124,7 @@ class Node(RequestMixIn, DataFrameMixIn):
             "resultformat": 6,
         }
 
-        r = self.getRequest(self._url, params)
+        r = self.getRequest(self.base_url, params)
 
         return self.get_df(r, parse_dates=[2], sort_values=["OPR_DT", "OPR_HR"])
 
@@ -166,11 +171,11 @@ class Node(RequestMixIn, DataFrameMixIn):
         return cls("DLAP_SDGE-APND")
 
 
-class Atlas(RequestMixIn, DataFrameMixIn):
+class Atlas(Oasis, RequestMixIn, DataFrameMixIn):
     """Atlas data """
 
     def __init__(self):
-        self._url = "http://oasis.caiso.com/oasisapi/SingleZip?"
+        super().__init__()
 
     def get_pnodes(self, start, end):
 
@@ -183,16 +188,16 @@ class Atlas(RequestMixIn, DataFrameMixIn):
             "resultformat": 6,
         }
 
-        r = self.getRequest(self._url, params)
+        r = self.getRequest(self.base_url, params)
 
         return self.get_df(r)
 
 
-class SystemDemand(RequestMixIn, DataFrameMixIn):
+class SystemDemand(Oasis, RequestMixIn, DataFrameMixIn):
     """System Demand  """
 
     def __init__(self):
-        self._url = "http://oasis.caiso.com/oasisapi/SingleZip?"
+        super().__init__()
 
     def get_peak_demand_forecast(self, start, end):
 
@@ -204,7 +209,7 @@ class SystemDemand(RequestMixIn, DataFrameMixIn):
             "resultformat": 6,
         }
 
-        r = self.getRequest(self._url, params)
+        r = self.getRequest(self.base_url, params)
 
         return self.get_df(r)
 
@@ -218,6 +223,6 @@ class SystemDemand(RequestMixIn, DataFrameMixIn):
             "resultformat": 6,
         }
 
-        r = self.getRequest(self._url, params)
+        r = self.getRequest(self.base_url, params)
 
         return self.get_df(r)
