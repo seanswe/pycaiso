@@ -13,10 +13,6 @@ class Oasis:
     def __init__(self):
         self.base_url = "http://oasis.caiso.com/oasisapi/SingleZip?"
 
-
-class RequestMixIn:
-    """Mixin to make http request and handle exceptions"""
-
     def get_request(self, url, params):
         """
         helper function to get http request and handle exceptions
@@ -55,12 +51,6 @@ class RequestMixIn:
         tz_ = pytz.timezone(local_tz)
         return tz_.localize(ts).astimezone(pytz.UTC).strftime(fmt)
 
-
-class DataFrameMixIn:
-    """
-    MixIn to convert http request results to pandas dataframe
-    """
-
     def get_df(self, r, parse_dates=False, sort_values=None):
         with io.BytesIO() as buffer:
             try:
@@ -81,7 +71,7 @@ class DataFrameMixIn:
         return df
 
 
-class Node(Oasis, RequestMixIn, DataFrameMixIn):
+class Node(Oasis):
     """CAISO PNode"""
 
     def __init__(self, node):
@@ -171,7 +161,7 @@ class Node(Oasis, RequestMixIn, DataFrameMixIn):
         return cls("DLAP_SDGE-APND")
 
 
-class Atlas(Oasis, RequestMixIn, DataFrameMixIn):
+class Atlas(Oasis):
     """Atlas data """
 
     def __init__(self):
@@ -193,7 +183,7 @@ class Atlas(Oasis, RequestMixIn, DataFrameMixIn):
         return self.get_df(r)
 
 
-class SystemDemand(Oasis, RequestMixIn, DataFrameMixIn):
+class SystemDemand(Oasis):
     """System Demand  """
 
     def __init__(self):
