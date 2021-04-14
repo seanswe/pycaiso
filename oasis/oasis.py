@@ -13,9 +13,17 @@ class Oasis:
     def __init__(self):
         self.base_url = "http://oasis.caiso.com/oasisapi/SingleZip?"
 
-    def get_request(self, url, params):
-        """
-        helper function to get http request and handle exceptions
+    def request(self, url, params):
+        """Make http request
+
+        Base method to get request at base_url
+
+        Args:
+            url (str): request url
+            arg2 (dict): keyword params to construct request
+
+        Returns:
+            r: requests response object
         """
 
         try:
@@ -44,14 +52,37 @@ class Oasis:
     def get_UTC_string(
         self, ts, local_tz="America/Los_Angeles", fmt="%Y%m%dT%H:%M-0000"
     ):
-        """
-        convert local datetime.datetime to string-formatted UTC
+        """Convert local timestamp to UTC string
+
+        Converts datetime.datetime or pandas.Timestamp in local time to
+        to UTC string for constructing HTTP request
+
+        Args:
+            ts (datetime.datetime): datetime to convert
+            local_tz (str): timezone
+
+        Returns:
+            utc (str): UTC string
         """
 
         tz_ = pytz.timezone(local_tz)
         return tz_.localize(ts).astimezone(pytz.UTC).strftime(fmt)
 
     def get_df(self, r, parse_dates=False, sort_values=None):
+
+        """Convert response to datframe
+
+        Converts requests.response to pandas.DataFrame
+
+        Args:
+            r : requests response object
+            parse_dates (bool, list): which columns to parse dates if any
+            sort_values(list): which columsn to sort by if any
+
+        Returns:
+            df (pandas.DataFrame): pandas dataframe
+        """
+
         with io.BytesIO() as buffer:
             try:
                 buffer.write(r.content)
@@ -82,17 +113,16 @@ class Node(Oasis):
         return f"Node(node='{self.node}')"
 
     def get_lmps(self, start, end, market="DAM"):
-        """Gets Locational Market Prices (LMPs) for a given pair of start and end dates
+        """Get LMPs
 
-        Parameters:
+        Gets Locational Market Prices (LMPs) for a given pair of start and end dates
 
-        start (datetime.datetime): start date
-        end (datetime.datetime): end date
-        market (str): market for prices; must be "DAM", "RTM", or "RTPD"
+        Args:
+            start (datetime.datetime): start date
+            market (str): market for prices; must be "DAM", "RTM", or "RTPD"
 
         Returns:
-
-        (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
+            (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
         """
 
         query_mapping = {
@@ -114,21 +144,22 @@ class Node(Oasis):
             "resultformat": 6,
         }
 
-        r = self.get_request(self.base_url, params)
+        r = self.request(self.base_url, params)
 
         return self.get_df(r, parse_dates=[2], sort_values=["OPR_DT", "OPR_HR"])
 
     def get_month_lmps(self, year, month):
-        """Helper method to get LMPs for a complete month
 
-        Parameters:
+        """Get LMPs for entire month
 
-        year(int): year of LMPs desired
-        month(int): month of LMPs desired
+        Helper method to get LMPs for a complete month
+
+        Args:
+            year(int): year of LMPs desired
+            month(int): month of LMPs desired
 
         Returns:
-
-        (pandas.DataFrame): Pandas dataframe containing the LMPs for given month
+            (pandas.DataFrame): Pandas dataframe containing the LMPs for given month
         """
 
         start = datetime(year, month, 1)
@@ -169,6 +200,19 @@ class Atlas(Oasis):
 
     def get_pnodes(self, start, end):
 
+        """Get pricing nodes
+
+        Get lost of pricing nodes and aggregated pricing nodes extant between
+        start and stop period
+
+        Args:
+            start (datetime.datetime): start date
+            end (datetime.datetime): end date
+
+        Returns:
+            (pandas.DataFrame): List of pricing nodes
+        """
+
         params = {
             "queryname": "ATL_PNODE",
             "startdatetime": self.get_UTC_string(start),
@@ -178,7 +222,7 @@ class Atlas(Oasis):
             "resultformat": 6,
         }
 
-        r = self.get_request(self.base_url, params)
+        r = self.request(self.base_url, params)
 
         return self.get_df(r)
 
@@ -190,6 +234,17 @@ class SystemDemand(Oasis):
         super().__init__()
 
     def get_peak_demand_forecast(self, start, end):
+        """Get peak demand forecast
+
+        Get peak demand forecasted between start and end dates
+
+        Args:
+            start (datetime.datetime): start date
+            end (datetime.datetime): end date
+
+        Returns:
+            (pandas.DataFrame): peak demand forecast
+        """
 
         params = {
             "queryname": "SLD_FCST_PEAK",
@@ -199,11 +254,23 @@ class SystemDemand(Oasis):
             "resultformat": 6,
         }
 
-        r = self.get_request(self.base_url, params)
+        r = self.request(self.base_url, params)
 
         return self.get_df(r)
 
     def get_demand_forecast(self, start, end):
+
+        """Get demand forecast
+
+        Get demand forecasted between start and end dates
+
+        Args:
+            start (datetime.datetime): start date
+            end (datetime.datetime): end date
+
+        Returns:
+            (pandas.DataFrame): demand forecast
+        """
 
         params = {
             "queryname": "SLD_FCST",
@@ -213,6 +280,6 @@ class SystemDemand(Oasis):
             "resultformat": 6,
         }
 
-        r = self.get_request(self.base_url, params)
+        r = self.request(self.base_url, params)
 
         return self.get_df(r)
