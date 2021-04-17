@@ -254,9 +254,9 @@ class SystemDemand(Oasis):
             "resultformat": 6,
         }
 
-        r = self.request(self.base_url, params)
+        response = self.request(self.base_url, params)
 
-        return self.get_df(r)
+        return self.get_df(response)
 
     def get_demand_forecast(self, start, end):
 
@@ -280,6 +280,6 @@ class SystemDemand(Oasis):
             "resultformat": 6,
         }
 
-        r = self.request(self.base_url, params)
+        response = self.request(self.base_url, params)
 
-        return self.get_df(r)
+        return self.get_df(response)
