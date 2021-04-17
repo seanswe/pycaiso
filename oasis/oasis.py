@@ -23,12 +23,12 @@ class Oasis:
             arg2 (dict): keyword params to construct request
 
         Returns:
-            r: requests response object
+            response: requests response object
         """
 
         try:
-            r = requests.get(url, params=params, timeout=5)
-            r.raise_for_status()
+            response = requests.get(url, params=params, timeout=5)
+            response.raise_for_status()
 
         except requests.exceptions.HTTPError as eh:
             print("HTTP Error:", eh)
@@ -42,23 +42,23 @@ class Oasis:
         except requests.exceptions.RequestException as e:
             print(e)
 
-        headers = r.headers["content-disposition"]
+        headers = response.headers["content-disposition"]
 
         if re.search(r"\.xml\.zip;$", headers):
             raise Exception("No data available for this query.")
 
-        return r
+        return response
 
     def get_UTC_string(
-        self, ts, local_tz="America/Los_Angeles", fmt="%Y%m%dT%H:%M-0000"
+        self, dt, local_tz="America/Los_Angeles", fmt="%Y%m%dT%H:%M-0000"
     ):
-        """Convert local timestamp to UTC string
+        """Convert local datetime to UTC string
 
         Converts datetime.datetime or pandas.Timestamp in local time to
         to UTC string for constructing HTTP request
 
         Args:
-            ts (datetime.datetime): datetime to convert
+            dt (datetime.datetime): datetime to convert
             local_tz (str): timezone
 
         Returns:
@@ -66,9 +66,9 @@ class Oasis:
         """
 
         tz_ = pytz.timezone(local_tz)
-        return tz_.localize(ts).astimezone(pytz.UTC).strftime(fmt)
+        return tz_.localize(dt).astimezone(pytz.UTC).strftime(fmt)
 
-    def get_df(self, r, parse_dates=False, sort_values=None):
+    def get_df(self, response, parse_dates=False, sort_values=None):
 
         """Convert response to datframe
 
@@ -85,7 +85,7 @@ class Oasis:
 
         with io.BytesIO() as buffer:
             try:
-                buffer.write(r.content)
+                buffer.write(response.content)
                 buffer.seek(0)
                 z = zipfile.ZipFile(buffer)
 
@@ -144,9 +144,9 @@ class Node(Oasis):
             "resultformat": 6,
         }
 
-        r = self.request(self.base_url, params)
+        response = self.request(self.base_url, params)
 
-        return self.get_df(r, parse_dates=[2], sort_values=["OPR_DT", "OPR_HR"])
+        return self.get_df(response, parse_dates=[2], sort_values=["OPR_DT", "OPR_HR"])
 
     def get_month_lmps(self, year, month):
 
@@ -222,9 +222,9 @@ class Atlas(Oasis):
             "resultformat": 6,
         }
 
-        r = self.request(self.base_url, params)
+        response = self.request(self.base_url, params)
 
-        return self.get_df(r)
+        return self.get_df(response)
 
 
 class SystemDemand(Oasis):
