@@ -40,7 +40,7 @@ sp15 = Node.SP15()
 
 sp15_lmps = sp15.get_lmps(datetime(2021, 1, 1), datetime(2021, 1, 2))
 
-print(sp15.head())
+print(sp15_lmps.head())
 
 #        INTERVALSTARTTIME_GMT        INTERVALENDTIME_GMT  ...        MW  GROUP
 # 0  2021-01-01T08:00:00-00:00  2021-01-01T09:00:00-00:00  ...  33.48613      1
