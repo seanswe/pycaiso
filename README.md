@@ -10,7 +10,8 @@ pycaiso currently supports the following reports and resultsets:
 
 ## Examples
 
-Get locational marginal prices (LMPs) for arbitrary Node and period:
+Get locational marginal prices (LMPs) in Day Ahead Market (DAM) for arbitrary Node and period:
+Note: "DAM" is the default market. You can also set the market parameter in get_lmps to "RTM" or "RTPD". 
 
 ```
 from oasis.oasis import Node
@@ -18,9 +19,11 @@ from datetime import datetime
 import pandas as pd
 
 # select pnode
+
 cj = Node("CAPTJACK_5_N003")
 
-# create dataframe with LMPS from arbitrary period (30 day maximum)
+# create dataframe with LMPS from arbitrary period (30 day maximum). 
+
 cj_lmps = cj.get_lmps(datetime(2021, 1, 1), datetime(2021, 1, 2))
 
 print(cj_lmps.head())
