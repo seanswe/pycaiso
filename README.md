@@ -15,6 +15,7 @@ Get locational marginal prices (LMPs) for arbitrary Node and period:
 ```
 from oasis.oasis import Node
 from datetime import datetime
+import pandas as pd
 
 # select pnode
 cj = Node("CAPTJACK_5_N003")
