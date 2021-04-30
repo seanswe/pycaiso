@@ -51,3 +51,22 @@ def test_node_get_lmps_default_is_rtm(node_lmps_rtm_df):
     """
 
     assert node_lmps_rtm_df.MARKET_RUN_ID.unique() == ["RTM"]
+
+
+@pytest.fixture(scope="module")
+def demand_forecast_df():
+    """
+    Basic API call to get demand forecast
+    """
+
+    df = SystemDemand().get_demand_forecast(datetime(2020, 1, 1), datetime(2020, 1, 2))
+
+    return df
+
+
+def test_demand_forecast_is_df(demand_forecast_df):
+    """
+    Test if demand forecast API call returns pandas DataFrame
+    """
+
+    assert isinstance(demand_forecast_df, pd.DataFrame)
