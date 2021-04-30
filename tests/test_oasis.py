@@ -70,3 +70,15 @@ def test_demand_forecast_is_df(demand_forecast_df):
     """
 
     assert isinstance(demand_forecast_df, pd.DataFrame)
+
+
+@pytest.fixture(scope="module")
+def atlas_df():
+    """
+    Basic API call to get list of all pnodes
+    """
+
+    atl = Atlas()
+    df = atl.get_pnodes(datetime(2021, 1, 1), datetime(2021, 2, 1))
+
+    return df
