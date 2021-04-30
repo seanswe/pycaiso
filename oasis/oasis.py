@@ -13,34 +13,20 @@ class Oasis:
     def __init__(self):
         self.base_url = "http://oasis.caiso.com/oasisapi/SingleZip?"
 
-    def request(self, url, params):
+    def request(self, params):
         """Make http request
 
         Base method to get request at base_url
 
         Args:
-            url (str): request url
-            arg2 (dict): keyword params to construct request
+            params (dict): keyword params to construct request
 
         Returns:
             response: requests response object
         """
 
-        try:
-            response = requests.get(url, params=params, timeout=5)
-            response.raise_for_status()
-
-        except requests.exceptions.HTTPError as eh:
-            print("HTTP Error:", eh)
-
-        except requests.exceptions.ConnectionError as ec:
-            print("Connection Error:", ec)
-
-        except requests.exceptions.Timeout as et:
-            print("Timeout:", et)
-
-        except requests.exceptions.RequestException as e:
-            print(e)
+        response = requests.get(self.base_url, params=params, timeout=5)
+        response.raise_for_status()
 
         headers = response.headers["content-disposition"]
 
@@ -93,7 +79,7 @@ class Oasis:
                 print("Bad zip file", e)
 
             else:
-                csv = z.open(z.namelist()[0])
+                csv = z.open(z.namelist()[0])  # ignores all but first file in zip
                 df = pd.read_csv(csv, parse_dates=parse_dates)
 
                 if sort_values:
@@ -144,7 +130,7 @@ class Node(Oasis):
             "resultformat": 6,
         }
 
-        response = self.request(self.base_url, params)
+        response = self.request(params)
 
         return self.get_df(response, parse_dates=[2], sort_values=["OPR_DT", "OPR_HR"])
 
@@ -222,7 +208,7 @@ class Atlas(Oasis):
             "resultformat": 6,
         }
 
-        response = self.request(self.base_url, params)
+        response = self.request(params)
 
         return self.get_df(response)
 
@@ -254,7 +240,7 @@ class SystemDemand(Oasis):
             "resultformat": 6,
         }
 
-        response = self.request(self.base_url, params)
+        response = self.request(params)
 
         return self.get_df(response)
 
@@ -280,6 +266,6 @@ class SystemDemand(Oasis):
             "resultformat": 6,
         }
 
-        response = self.request(self.base_url, params)
+        response = self.request(params)
 
         return self.get_df(response)
