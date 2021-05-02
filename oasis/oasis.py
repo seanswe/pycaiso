@@ -31,7 +31,7 @@ class Oasis:
         headers = response.headers["content-disposition"]
 
         if re.search(r"\.xml\.zip;$", headers):
-            raise Exception("No data available for this query.")
+            raise NoDataAvailableError("No data available for this query.")
 
         return response
 
@@ -179,7 +179,7 @@ class Node(Oasis):
 
 
 class Atlas(Oasis):
-    """Atlas data """
+    """Atlas data"""
 
     def __init__(self):
         super().__init__()
@@ -214,7 +214,7 @@ class Atlas(Oasis):
 
 
 class SystemDemand(Oasis):
-    """System Demand  """
+    """System Demand"""
 
     def __init__(self):
         super().__init__()
@@ -269,3 +269,7 @@ class SystemDemand(Oasis):
         response = self.request(params)
 
         return self.get_df(response)
+
+
+class NoDataAvailableError(Exception):
+    pass
