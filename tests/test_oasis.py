@@ -1,5 +1,13 @@
-from oasis.oasis import Node, Atlas, SystemDemand
-from datetime import datetime
+from oasis.oasis import (
+    Oasis,
+    Node,
+    Atlas,
+    SystemDemand,
+    BadDateRangeError,
+)
+
+
+from datetime import datetime, timedelta
 import pandas as pd
 import pytz
 import pytest
@@ -82,3 +90,12 @@ def atlas_df():
     df = atl.get_pnodes(datetime(2021, 1, 1), datetime(2021, 2, 1))
 
     return df
+
+
+def test_validate_date_range_start_after_end():
+    """
+    Test if validate_date_range handles start date after end date
+    """
+
+    with pytest.raises(BadDateRangeError):
+        Oasis.validate_date_range(datetime(2021, 1, 2), datetime(2021, 1, 1))
