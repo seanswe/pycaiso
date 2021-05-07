@@ -13,6 +13,17 @@ class Oasis:
     def __init__(self):
         self.base_url = "http://oasis.caiso.com/oasisapi/SingleZip?"
 
+    @staticmethod
+    def validate_date_range(start, end):
+        if start.date() >= end.date():
+            raise BadDateRangeError("start must be before or equal to end.")
+
+        if end.date() > datetime.now().date():
+            raise BadDateRangeError("end must be before today.")
+
+        if start.date() > datetime.now().date():
+            raise BadDateRangeError("start must be before today.")
+
     def request(self, params):
         """Make http request
 
@@ -31,7 +42,7 @@ class Oasis:
         headers = response.headers["content-disposition"]
 
         if re.search(r"\.xml\.zip;$", headers):
-            raise Exception("No data available for this query.")
+            raise NoDataAvailableError("No data available for this query.")
 
         return response
 
@@ -111,6 +122,8 @@ class Node(Oasis):
             (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
         """
 
+        self.validate_date_range(start, end)
+
         query_mapping = {
             "DAM": "PRC_LMP",
             "RTM": "PRC_INTVL_LMP",
@@ -179,7 +192,7 @@ class Node(Oasis):
 
 
 class Atlas(Oasis):
-    """Atlas data """
+    """Atlas data"""
 
     def __init__(self):
         super().__init__()
@@ -199,6 +212,8 @@ class Atlas(Oasis):
             (pandas.DataFrame): List of pricing nodes
         """
 
+        self.validate_date_range(start, end)
+
         params = {
             "queryname": "ATL_PNODE",
             "startdatetime": self.get_UTC_string(start),
@@ -214,7 +229,7 @@ class Atlas(Oasis):
 
 
 class SystemDemand(Oasis):
-    """System Demand  """
+    """System Demand"""
 
     def __init__(self):
         super().__init__()
@@ -269,3 +284,11 @@ class SystemDemand(Oasis):
         response = self.request(params)
 
         return self.get_df(response)
+
+
+class NoDataAvailableError(Exception):
+    pass
+
+
+class BadDateRangeError(Exception):
+    pass
