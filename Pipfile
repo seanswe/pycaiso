@@ -10,7 +10,11 @@ requests = "*"
 [dev-packages]
 black = "*"
 pylint = "*"
+<<<<<<< HEAD
 ipython = "*"
+=======
+pytest = "*"
+>>>>>>> a53bf3c075122a4d66a12847ceb236ca6bfa0a1a
 
 [requires]
 python_version = "3.8"
