@@ -36,7 +36,7 @@ class Oasis:
             response: requests response object
         """
 
-        response = requests.get(self.base_url, params=params, timeout=5)
+        response = requests.get(self.base_url, params=params, timeout=10)
         response.raise_for_status()
 
         headers = response.headers["content-disposition"]
