@@ -15,14 +15,17 @@ class Oasis:
 
     @staticmethod
     def validate_date_range(start, end):
-        if start.date() >= end.date():
-            raise BadDateRangeError("start must be before or equal to end.")
+        if start.date() > end.date():
+            raise BadDateRangeError("start must be before end.")
 
         if end.date() > datetime.now().date():
             raise BadDateRangeError("end must be before today.")
 
         if start.date() > datetime.now().date():
             raise BadDateRangeError("start must be before today.")
+
+        if start.date() == end.date():
+            raise BadDateRangeError("end must be at least one day after start.")
 
     def request(self, params):
         """Make http request
@@ -109,18 +112,22 @@ class Node(Oasis):
     def __repr__(self):
         return f"Node(node='{self.node}')"
 
-    def get_lmps(self, start, end, market="DAM"):
+    def get_lmps(self, start, end=None, market="DAM"):
         """Get LMPs
 
         Gets Locational Market Prices (LMPs) for a given pair of start and end dates
 
         Args:
-            start (datetime.datetime): start date
+            start (datetime.datetime): start date, inclusive
+            end (datetime.datetime): end date, exclusive
             market (str): market for prices; must be "DAM", "RTM", or "RTPD"
 
         Returns:
             (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
         """
+
+        if end is None:
+            end = start + timedelta(days=1)
 
         self.validate_date_range(start, end)
 
