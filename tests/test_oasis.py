@@ -15,8 +15,8 @@ import pytz
 import pytest
 
 
-@freeze_time('2020-01-02')
 @pytest.fixture(scope="module")
+@freeze_time('2020-01-02')
 def node_lmps_default_df():
     """
     Basic API call to get LMPs in DAM for period 2020-01-1 to 2020-01-02 as df
@@ -28,8 +28,8 @@ def node_lmps_default_df():
     return df
 
 
-@freeze_time('2020-01-02')
 @pytest.fixture(scope="module")
+@freeze_time('2020-01-02')
 def node_lmps_rtm_df():
     """
     Basic API call to get LMPs in DAM for period 2020-01-1 to 2020-01-02 as df
@@ -65,8 +65,8 @@ def test_node_get_lmps_default_is_rtm(node_lmps_rtm_df):
     assert node_lmps_rtm_df.MARKET_RUN_ID.unique() == ["RTM"]
 
 
-@freeze_time('2020-01-02')
 @pytest.fixture(scope="module")
+@freeze_time('2020-01-02')
 def demand_forecast_df():
     """
     Basic API call to get demand forecast
@@ -85,8 +85,8 @@ def test_demand_forecast_is_df(demand_forecast_df):
     assert isinstance(demand_forecast_df, pd.DataFrame)
 
 
-@freeze_time('2020-01-02')
 @pytest.fixture(scope="module")
+@freeze_time('2020-01-02')
 def atlas_df():
     """
     Basic API call to get list of all pnodes
@@ -98,13 +98,13 @@ def atlas_df():
     return df
 
 
-@freeze_time('2020-01-02')
 @pytest.mark.parametrize(
     "start, end",
     [
         (datetime(2021, 1, 2), datetime(2021, 1, 1)),
     ]
 )
+@freeze_time('2020-01-02')
 def test_validate_date_range_start_after_end(start, end):
     """
     Test if validate_date_range handles start date after end date
