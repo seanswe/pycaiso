@@ -92,10 +92,19 @@ def atlas_df():
     return df
 
 
-def test_validate_date_range_start_after_end():
+@pytest.mark.parametrize(
+    "start, end",
+    [
+        (datetime(2021, 1, 2), datetime(2021, 1, 1)),
+        (datetime.now(), datetime.now() + timedelta(100)),
+        (datetime.now() + timedelta(100), datetime.now()),
+        (datetime(2021, 1, 2), datetime(2021, 1, 2)),
+    ]
+)
+def test_validate_date_range_start_after_end(start, end):
     """
     Test if validate_date_range handles start date after end date
     """
 
     with pytest.raises(BadDateRangeError):
-        Oasis.validate_date_range(datetime(2021, 1, 2), datetime(2021, 1, 1))
+        Oasis.validate_date_range(start, end)
