@@ -14,7 +14,7 @@ Get locational marginal prices (LMPs) in Day Ahead Market (DAM) for arbitrary No
 Note: "DAM" is the default market. You can also set the market parameter in get_lmps to "RTM" or "RTPD". 
 
 ```
-from oasis.oasis import Node
+from pycaiso.oasis import Node
 from datetime import datetime
 import pandas as pd
 
