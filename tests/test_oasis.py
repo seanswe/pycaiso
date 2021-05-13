@@ -1,4 +1,4 @@
-from oasis.oasis import (
+from pycaiso.oasis import (
     Oasis,
     Node,
     Atlas,
