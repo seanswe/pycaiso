@@ -1,4 +1,4 @@
-## caisotools AKA pycaiso
+## pycaiso
 
 pycaiso is a python wrapper for the California Independent System Operator (CAISO) Open Access Same-time Information System (OASIS) API. 
 
