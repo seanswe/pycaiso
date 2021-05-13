@@ -104,6 +104,9 @@ def atlas_df():
     "start, end",
     [
         (datetime(2021, 1, 2), datetime(2021, 1, 1)),
+        (datetime.now(), datetime.now() + timedelta(100)),
+        (datetime.now() + timedelta(100), datetime.now()),
+        (datetime(2021, 1, 2), datetime(2021, 1, 2)),
     ]
 )
 def test_validate_date_range_start_after_end(start, end):
