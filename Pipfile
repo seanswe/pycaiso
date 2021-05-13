@@ -12,6 +12,8 @@ black = "*"
 pylint = "*"
 ipython = "*"
 pytest = "*"
+jupyter = "*"
+flit = "*"
 
 [requires]
 python_version = "3.8"
