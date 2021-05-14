@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from oasis.oasis import (
     Oasis,
     Node,
@@ -7,10 +9,16 @@ from oasis.oasis import (
 )
 
 
-from datetime import datetime, timedelta
+from freezegun import freeze_time
 import pandas as pd
 import pytz
 import pytest
+
+
+@pytest.fixture(scope="session", autouse=True)
+def frozen_time():
+    with freeze_time('2020-01-02'):
+        yield
 
 
 @pytest.fixture(scope="module")
@@ -20,7 +28,7 @@ def node_lmps_default_df():
     """
 
     cj = Node("CAPTJACK_5_N003")
-    df = cj.get_lmps(datetime(2020, 1, 1), datetime(2020, 1, 2))
+    df = cj.get_lmps(datetime(2020, 1, 1), datetime(2020, 1, 3))
 
     return df
 
@@ -32,7 +40,7 @@ def node_lmps_rtm_df():
     """
 
     cj = Node("CAPTJACK_5_N003")
-    df = cj.get_lmps(datetime(2020, 1, 1), datetime(2020, 1, 2), market="RTM")
+    df = cj.get_lmps(datetime(2020, 1, 1), datetime(2020, 1, 3), market="RTM")
 
     return df
 
@@ -67,7 +75,7 @@ def demand_forecast_df():
     Basic API call to get demand forecast
     """
 
-    df = SystemDemand().get_demand_forecast(datetime(2020, 1, 1), datetime(2020, 1, 2))
+    df = SystemDemand().get_demand_forecast(datetime(2020, 1, 1), datetime(2020, 1, 3))
 
     return df
 
@@ -92,10 +100,19 @@ def atlas_df():
     return df
 
 
-def test_validate_date_range_start_after_end():
+@pytest.mark.parametrize(
+    "start, end",
+    [
+        (datetime(2021, 1, 2), datetime(2021, 1, 1)),
+        (datetime.now(), datetime.now() + timedelta(100)),
+        (datetime.now() + timedelta(100), datetime.now()),
+        (datetime(2021, 1, 2), datetime(2021, 1, 2)),
+    ]
+)
+def test_validate_date_range_start_after_end(start, end):
     """
     Test if validate_date_range handles start date after end date
     """
 
     with pytest.raises(BadDateRangeError):
-        Oasis.validate_date_range(datetime(2021, 1, 2), datetime(2021, 1, 1))
+        Oasis.validate_date_range(start, end)

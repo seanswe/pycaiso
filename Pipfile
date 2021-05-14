@@ -12,6 +12,7 @@ black = "*"
 pylint = "*"
 ipython = "*"
 pytest = "*"
+freezegun = "*"
 jupyter = "*"
 flit = "*"
 
