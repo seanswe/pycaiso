@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 pandas = "~=1.2"
 requests = "*"
+freezegun = "*"
 
 [dev-packages]
 black = "*"
