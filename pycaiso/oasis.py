@@ -15,17 +15,20 @@ class Oasis:
 
     @staticmethod
     def validate_date_range(start, end):
-        if start.date() > end.date():
-            raise BadDateRangeError("start must be before end.")
+        error = None
 
-        if end.date() > datetime.now().date():
-            raise BadDateRangeError("end must be before today.")
+        if start > end:
+            error = "Start must be before end."
 
-        if start.date() > datetime.now().date():
-            raise BadDateRangeError("start must be before today.")
+        if not start < datetime.now() < end:
+            error = "Today must be within start and end range."
 
         if start.date() == end.date():
-            raise BadDateRangeError("end must be at least one day after start.")
+            # TODO this error does not match this condition
+            error = "End must be at least one day after start."
+
+        if error is not None:
+            raise BadDateRangeError(error)
 
     def request(self, params):
         """Make http request
