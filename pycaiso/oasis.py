@@ -86,6 +86,25 @@ class Oasis:
             df (pandas.DataFrame): pandas dataframe
         """
 
+        COLUMNS = [
+            "INTERVALSTARTTIME_GMT",
+            "INTERVALENDTIME_GMT",
+            "OPR_DT",
+            "OPR_HR",
+            "OPR_INTERVAL",
+            "NODE_ID_XML",
+            "NODE_ID",
+            "NODE",
+            "MARKET_RUN_ID",
+            "LMP_TYPE",
+            "XML_DATA_ITEM",
+            "PNODE_RESMRID",
+            "GRP_TYPE",
+            "POS",
+            "MW",
+            "GROUP",
+        ]
+
         with io.BytesIO() as buffer:
             try:
                 buffer.write(response.content)
@@ -102,7 +121,7 @@ class Oasis:
                 if sort_values:
                     df = df.sort_values(sort_values).reset_index(drop=True)
 
-        return df
+        return df.reindex(columns=COLUMNS)
 
 
 class Node(Oasis):
