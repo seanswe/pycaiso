@@ -119,6 +119,8 @@ class Oasis:
 
                 if sort_values:
                     df = df.sort_values(sort_values).reset_index(drop=True)
+            finally:
+                df = df.rename(columns={"PRC": "MW"})
 
         return df.reindex(columns=COLUMNS)
 
