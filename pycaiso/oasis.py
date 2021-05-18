@@ -20,12 +20,11 @@ class Oasis:
         if start > end:
             error = "Start must be before end."
 
-        if not start < datetime.now() < end:
-            error = "Today must be within start and end range."
+        if end > datetime.now().date():
+            error = "End must be before or equal to today."
 
         if start.date() == end.date():
-            # TODO this error does not match this condition
-            error = "End must be at least one day after start."
+            error = "Start and end cannot be equal. To return data only from start date, pass only start."
 
         if error is not None:
             raise BadDateRangeError(error)
