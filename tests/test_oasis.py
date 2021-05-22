@@ -17,7 +17,7 @@ import pytest
 
 @pytest.fixture(scope="session", autouse=True)
 def frozen_time():
-    with freeze_time("2020-01-02"):
+    with freeze_time("2020-01-03"):
         yield
 
 
@@ -28,7 +28,7 @@ def node_lmps_default_df():
     """
 
     cj = Node("CAPTJACK_5_N003")
-    df = cj.get_lmps(datetime(2020, 1, 1), datetime(2020, 1, 3))
+    df = cj.get_lmps(datetime(2020, 1, 1), datetime(2020, 1, 2))
 
     return df
 
@@ -40,7 +40,7 @@ def node_lmps_rtm_df():
     """
 
     cj = Node("CAPTJACK_5_N003")
-    df = cj.get_lmps(datetime(2020, 1, 1), datetime(2020, 1, 3), market="RTM")
+    df = cj.get_lmps(datetime(2020, 1, 1), datetime(2020, 1, 2), market="RTM")
 
     return df
 
@@ -103,10 +103,10 @@ def atlas_df():
 @pytest.mark.parametrize(
     "start, end",
     [
-        (datetime(2021, 1, 2), datetime(2021, 1, 1)),
-        (datetime.now(), datetime.now() + timedelta(100)),
-        (datetime.now() + timedelta(100), datetime.now()),
-        (datetime(2021, 1, 2), datetime(2021, 1, 2)),
+        (datetime(2021, 1, 2), datetime(2021, 1, 1)),  # start before end
+        (datetime.now() + timedelta(100), datetime.now()),  # start after today
+        (datetime.now(), datetime.now() + timedelta(100)),  # end after today
+        (datetime(2021, 1, 2), datetime(2021, 1, 2)),  # start == end
     ],
 )
 def test_validate_date_range_start_after_end(start, end):
