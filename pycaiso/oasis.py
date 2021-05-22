@@ -20,8 +20,14 @@ class Oasis:
         if start > end:
             error = "Start must be before end."
 
-        if end > datetime.now().date():
-            error = "End must be before or equal to today."
+        if start > datetime.now():
+            error = "Start must be before today, " + str(
+                datetime.now().strftime("%Y-%m-%d")
+            )
+        elif end > datetime.now():
+            error = "End must be before or equal to today, " + str(
+                datetime.now().strftime("%Y-%m-%d")
+            )
 
         if start.date() == end.date():
             error = "Start and end cannot be equal. To return data only from start date, pass only start."
