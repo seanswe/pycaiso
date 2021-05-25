@@ -15,13 +15,18 @@ class Oasis:
 
     @staticmethod
     def validate_date_range(start, end):
+
+        STRNOW = str(datetime.now().strftime("%Y-%m-%d"))
         error = None
 
         if start > end:
             error = "Start must be before end."
 
-        if end > datetime.now().date():
-            error = "End must be before or equal to today."
+        if start > datetime.now():
+            error = "Start must be before today, " + STRNOW
+
+        elif end > datetime.now():
+            error = "End must be before or equal to today, " + STRNOW
 
         if start.date() == end.date():
             error = "Start and end cannot be equal. To return data only from start date, pass only start."
