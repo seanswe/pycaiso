@@ -17,7 +17,7 @@ import pytest
 
 @pytest.fixture(scope="session", autouse=True)
 def frozen_time():
-    with freeze_time("2020-01-03"):
+    with freeze_time("2020-01-02"):
         yield
 
 
