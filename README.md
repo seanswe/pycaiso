@@ -13,7 +13,7 @@ pycaiso currently supports the following reports and resultsets:
 Get locational marginal prices (LMPs) in Day Ahead Market (DAM) for arbitrary Node and period:
 Note: "DAM" is the default market. You can also set the market parameter in get_lmps to "RTM" or "RTPD". 
 
-```
+```python
 from pycaiso.oasis import Node
 from datetime import datetime
 import pandas as pd
@@ -38,7 +38,7 @@ print(cj_lmps.head())
 
 Alternatively, you can use pre-built Nodes for major aggregated pricing nodes (apnodes) like SP15:
 
-```
+```python
 # use pre-built pnode
 sp15 = Node.SP15()
 
