@@ -5,6 +5,7 @@ build-backend = "flit_core.buildapi"
 [tool.flit.metadata]
 module = "pycaiso"
 author = "Sean Swe"
+home-page = "https://github.com/seanswe/pycaiso"
 author-email = "seanswe@gmail.com"
 classifiers = [ "License :: OSI Approved :: MIT License",]
 description-file = "README.md"
