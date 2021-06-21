@@ -16,6 +16,9 @@ pytest = "*"
 freezegun = "*"
 jupyter = "*"
 flit = "*"
+mypy = "*"
+types-requests = "*"
+types-freezegun = "*"
 
 [requires]
 python_version = "3.8"
