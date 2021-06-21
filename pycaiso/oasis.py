@@ -1,23 +1,34 @@
 import io
+import re
 import zipfile
 from datetime import datetime, timedelta
-import re
+from typing import List, Dict, Union, Optional, Any
 
 import pandas as pd
 import pytz
 import requests
 from dateutil.relativedelta import relativedelta
 
+Response = requests.models.Response
+
+
+class NoDataAvailableError(Exception):
+    pass
+
+
+class BadDateRangeError(Exception):
+    pass
+
 
 class Oasis:
-    def __init__(self):
-        self.base_url = "http://oasis.caiso.com/oasisapi/SingleZip?"
+    def __init__(self) -> None:
+        self.base_url: str = "http://oasis.caiso.com/oasisapi/SingleZip?"
 
     @staticmethod
-    def validate_date_range(start, end):
+    def _validate_date_range(start: datetime, end: datetime) -> None:
 
-        STRNOW = str(datetime.now().strftime("%Y-%m-%d"))
-        error = None
+        STRNOW: str = str(datetime.now().strftime("%Y-%m-%d"))
+        error: Union[str, None] = None
 
         if start > end:
             error = "Start must be before end."
@@ -34,7 +45,7 @@ class Oasis:
         if error is not None:
             raise BadDateRangeError(error)
 
-    def request(self, params):
+    def request(self, params: Dict[str, str]) -> Response:
         """Make http request
 
         Base method to get request at base_url
@@ -46,19 +57,22 @@ class Oasis:
             response: requests response object
         """
 
-        response = requests.get(self.base_url, params=params, timeout=10)
-        response.raise_for_status()
+        resp: Response = requests.get(self.base_url, params=params, timeout=10)
+        resp.raise_for_status()
 
-        headers = response.headers["content-disposition"]
+        headers: str = resp.headers["content-disposition"]
 
         if re.search(r"\.xml\.zip;$", headers):
             raise NoDataAvailableError("No data available for this query.")
 
-        return response
+        return resp
 
-    def get_UTC_string(
-        self, dt, local_tz="America/Los_Angeles", fmt="%Y%m%dT%H:%M-0000"
-    ):
+    def _get_UTC_string(
+        self,
+        dt: datetime,
+        local_tz: str = "America/Los_Angeles",
+        fmt: str = "%Y%m%dT%H:%M-0000",
+    ) -> str:
         """Convert local datetime to UTC string
 
         Converts datetime.datetime or pandas.Timestamp in local time to
@@ -75,7 +89,12 @@ class Oasis:
         tz_ = pytz.timezone(local_tz)
         return tz_.localize(dt).astimezone(pytz.UTC).strftime(fmt)
 
-    def get_df(self, response, parse_dates=False, sort_values=None):
+    def get_df(
+        self,
+        response: Response,
+        parse_dates: Optional[Union[List[int], bool]] = False,
+        sort_values: Optional[List[str]] = None,
+    ) -> pd.DataFrame:
 
         """Convert response to datframe
 
@@ -90,7 +109,7 @@ class Oasis:
             df (pandas.DataFrame): pandas dataframe
         """
 
-        COLUMNS = [
+        COLUMNS: List[str] = [
             "INTERVALSTARTTIME_GMT",
             "INTERVALENDTIME_GMT",
             "OPR_DT",
@@ -113,14 +132,14 @@ class Oasis:
             try:
                 buffer.write(response.content)
                 buffer.seek(0)
-                z = zipfile.ZipFile(buffer)
+                z: zipfile.ZipFile = zipfile.ZipFile(buffer)
 
             except zipfile.BadZipFile as e:
                 print("Bad zip file", e)
 
-            else:
+            else:  # TODO need to annotate csv
                 csv = z.open(z.namelist()[0])  # ignores all but first file in zip
-                df = pd.read_csv(csv, parse_dates=parse_dates)
+                df: pd.DataFrame = pd.read_csv(csv, parse_dates=parse_dates)
 
                 if sort_values:
                     df = df.sort_values(sort_values).reset_index(drop=True)
@@ -133,14 +152,16 @@ class Oasis:
 class Node(Oasis):
     """CAISO PNode"""
 
-    def __init__(self, node):
+    def __init__(self, node: str) -> None:
         self.node = node
         super().__init__()
 
     def __repr__(self):
         return f"Node(node='{self.node}')"
 
-    def get_lmps(self, start, end=None, market="DAM"):
+    def get_lmps(
+        self, start: datetime, end: Optional[datetime] = None, market: str = "DAM"
+    ) -> pd.DataFrame:
         """Get LMPs
 
         Gets Locational Market Prices (LMPs) for a given pair of start and end dates
@@ -157,7 +178,7 @@ class Node(Oasis):
         if end is None:
             end = start + timedelta(days=1)
 
-        self.validate_date_range(start, end)
+        self._validate_date_range(start, end)
 
         query_mapping = {
             "DAM": "PRC_LMP",
@@ -168,21 +189,21 @@ class Node(Oasis):
         if market not in query_mapping.keys():
             raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
 
-        params = {
+        params: Dict[str, Any] = {  # TODO: replace Any with Union or overload
             "queryname": query_mapping[market],
             "market_run_id": market,
-            "startdatetime": self.get_UTC_string(start),
-            "enddatetime": self.get_UTC_string(end),
+            "startdatetime": self._get_UTC_string(start),
+            "enddatetime": self._get_UTC_string(end),
             "version": 1,
             "node": self.node,
             "resultformat": 6,
         }
 
-        response = self.request(params)
+        resp: Response = self.request(params)
 
-        return self.get_df(response, parse_dates=[2], sort_values=["OPR_DT", "OPR_HR"])
+        return self.get_df(resp, parse_dates=[2], sort_values=["OPR_DT", "OPR_HR"])
 
-    def get_month_lmps(self, year, month):
+    def get_month_lmps(self, year: int, month: int) -> pd.DataFrame:
 
         """Get LMPs for entire month
 
@@ -196,8 +217,8 @@ class Node(Oasis):
             (pandas.DataFrame): Pandas dataframe containing the LMPs for given month
         """
 
-        start = datetime(year, month, 1)
-        end = start + relativedelta(months=1)
+        start: datetime = datetime(year, month, 1)
+        end: datetime = start + relativedelta(months=1)
 
         return self.get_lmps(start, end)
 
@@ -232,7 +253,7 @@ class Atlas(Oasis):
     def __init__(self):
         super().__init__()
 
-    def get_pnodes(self, start, end):
+    def get_pnodes(self, start: datetime, end: datetime) -> pd.DataFrame:
 
         """Get pricing nodes
 
@@ -247,12 +268,12 @@ class Atlas(Oasis):
             (pandas.DataFrame): List of pricing nodes
         """
 
-        self.validate_date_range(start, end)
+        self._validate_date_range(start, end)
 
-        params = {
+        params: Dict[str, Any] = {
             "queryname": "ATL_PNODE",
-            "startdatetime": self.get_UTC_string(start),
-            "enddatetime": self.get_UTC_string(end),
+            "startdatetime": self._get_UTC_string(start),
+            "enddatetime": self._get_UTC_string(end),
             "Pnode_type": "ALL",
             "version": 1,
             "resultformat": 6,
@@ -269,7 +290,7 @@ class SystemDemand(Oasis):
     def __init__(self):
         super().__init__()
 
-    def get_peak_demand_forecast(self, start, end):
+    def get_peak_demand_forecast(self, start: datetime, end: datetime) -> pd.DataFrame:
         """Get peak demand forecast
 
         Get peak demand forecasted between start and end dates
@@ -282,19 +303,19 @@ class SystemDemand(Oasis):
             (pandas.DataFrame): peak demand forecast
         """
 
-        params = {
+        params: Dict[str, Any] = {
             "queryname": "SLD_FCST_PEAK",
-            "startdatetime": self.get_UTC_string(start),
-            "enddatetime": self.get_UTC_string(end),
+            "startdatetime": self._get_UTC_string(start),
+            "enddatetime": self._get_UTC_string(end),
             "version": 1,
             "resultformat": 6,
         }
 
-        response = self.request(params)
+        resp: Response = self.request(params)
 
-        return self.get_df(response)
+        return self.get_df(resp)
 
-    def get_demand_forecast(self, start, end):
+    def get_demand_forecast(self, start: datetime, end: datetime) -> pd.DataFrame:
 
         """Get demand forecast
 
@@ -308,22 +329,14 @@ class SystemDemand(Oasis):
             (pandas.DataFrame): demand forecast
         """
 
-        params = {
+        params: Dict[str, Any] = {
             "queryname": "SLD_FCST",
-            "startdatetime": self.get_UTC_string(start),
-            "enddatetime": self.get_UTC_string(end),
+            "startdatetime": self._get_UTC_string(start),
+            "enddatetime": self._get_UTC_string(end),
             "version": 1,
             "resultformat": 6,
         }
 
-        response = self.request(params)
+        resp = self.request(params)
 
-        return self.get_df(response)
-
-
-class NoDataAvailableError(Exception):
-    pass
-
-
-class BadDateRangeError(Exception):
-    pass
+        return self.get_df(resp)

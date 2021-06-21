@@ -115,4 +115,4 @@ def test_validate_date_range_start_after_end(start, end):
     """
 
     with pytest.raises(BadDateRangeError):
-        Oasis.validate_date_range(start, end)
+        Oasis._validate_date_range(start, end)
