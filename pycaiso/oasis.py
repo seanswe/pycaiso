@@ -94,7 +94,7 @@ class Oasis:
         response: Response,
         parse_dates: Optional[Union[List[int], bool]] = False,
         sort_values: Optional[List[str]] = None,
-        atlas: bool = False,
+        reindex_columns: Optional[List[str]] = None,
     ) -> pd.DataFrame:
 
         """Convert response to datframe
@@ -110,25 +110,6 @@ class Oasis:
             df (pandas.DataFrame): pandas dataframe
         """
 
-        PRC_COLUMNS: List[str] = [
-            "INTERVALSTARTTIME_GMT",
-            "INTERVALENDTIME_GMT",
-            "OPR_DT",
-            "OPR_HR",
-            "OPR_INTERVAL",
-            "NODE_ID_XML",
-            "NODE_ID",
-            "NODE",
-            "MARKET_RUN_ID",
-            "LMP_TYPE",
-            "XML_DATA_ITEM",
-            "PNODE_RESMRID",
-            "GRP_TYPE",
-            "POS",
-            "MW",
-            "GROUP",
-        ]
-
         with io.BytesIO() as buffer:
             try:
                 buffer.write(response.content)
@@ -142,16 +123,15 @@ class Oasis:
                 csv = z.open(z.namelist()[0])  # ignores all but first file in zip
                 df: pd.DataFrame = pd.read_csv(csv, parse_dates=parse_dates)
 
-                if sort_values:
-                    df = df.sort_values(sort_values).reset_index(drop=True)
-            finally:
                 df = df.rename(columns={"PRC": "MW"})
 
-        if atlas:
-            return df
+                if sort_values:
+                    df = df.sort_values(sort_values).reset_index(drop=True)
 
-        else:
-            return df.reindex(columns=PRC_COLUMNS)
+                if reindex_columns:
+                    df = df.reindex(columns=reindex_columns)
+
+        return df
 
 
 class Node(Oasis):
@@ -185,17 +165,36 @@ class Node(Oasis):
 
         self._validate_date_range(start, end)
 
-        query_mapping = {
+        QUERY_MAPPING: Dict[str, str] = {
             "DAM": "PRC_LMP",
             "RTM": "PRC_INTVL_LMP",
             "RTPD": "PRC_RTPD_LMP",
         }
 
-        if market not in query_mapping.keys():
+        COLUMNS: List[str] = [
+            "INTERVALSTARTTIME_GMT",
+            "INTERVALENDTIME_GMT",
+            "OPR_DT",
+            "OPR_HR",
+            "OPR_INTERVAL",
+            "NODE_ID_XML",
+            "NODE_ID",
+            "NODE",
+            "MARKET_RUN_ID",
+            "LMP_TYPE",
+            "XML_DATA_ITEM",
+            "PNODE_RESMRID",
+            "GRP_TYPE",
+            "POS",
+            "MW",
+            "GROUP",
+        ]
+
+        if market not in QUERY_MAPPING.keys():
             raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
 
         params: Dict[str, Any] = {
-            "queryname": query_mapping[market],
+            "queryname": QUERY_MAPPING[market],
             "market_run_id": market,
             "startdatetime": self._get_UTC_string(start),
             "enddatetime": self._get_UTC_string(end),
@@ -206,7 +205,12 @@ class Node(Oasis):
 
         resp: Response = self.request(params)
 
-        return self.get_df(resp, parse_dates=[2], sort_values=["OPR_DT", "OPR_HR"])
+        return self.get_df(
+            resp,
+            parse_dates=[2],
+            sort_values=["OPR_DT", "OPR_HR"],
+            reindex_columns=COLUMNS,
+        )
 
     def get_month_lmps(self, year: int, month: int) -> pd.DataFrame:
 
@@ -286,7 +290,7 @@ class Atlas(Oasis):
 
         response = self.request(params)
 
-        return self.get_df(response, atlas=True)
+        return self.get_df(response)
 
 
 class SystemDemand(Oasis):
