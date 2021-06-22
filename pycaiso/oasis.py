@@ -2,7 +2,7 @@ import io
 import re
 import zipfile
 from datetime import datetime, timedelta
-from typing import List, Dict, Union, Optional, Any
+from typing import List, Dict, TypeVar, Union, Optional, Any
 
 import pandas as pd
 import pytz
@@ -45,7 +45,7 @@ class Oasis:
         if error is not None:
             raise BadDateRangeError(error)
 
-    def request(self, params: Dict[str, str]) -> Response:
+    def request(self, params: Dict[str, Any]) -> Response:
         """Make http request
 
         Base method to get request at base_url
@@ -94,6 +94,7 @@ class Oasis:
         response: Response,
         parse_dates: Optional[Union[List[int], bool]] = False,
         sort_values: Optional[List[str]] = None,
+        atlas: bool = False,
     ) -> pd.DataFrame:
 
         """Convert response to datframe
@@ -109,7 +110,7 @@ class Oasis:
             df (pandas.DataFrame): pandas dataframe
         """
 
-        COLUMNS: List[str] = [
+        PRC_COLUMNS: List[str] = [
             "INTERVALSTARTTIME_GMT",
             "INTERVALENDTIME_GMT",
             "OPR_DT",
@@ -146,7 +147,11 @@ class Oasis:
             finally:
                 df = df.rename(columns={"PRC": "MW"})
 
-        return df.reindex(columns=COLUMNS)
+        if atlas:
+            return df
+
+        else:
+            return df.reindex(columns=PRC_COLUMNS)
 
 
 class Node(Oasis):
@@ -189,7 +194,7 @@ class Node(Oasis):
         if market not in query_mapping.keys():
             raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
 
-        params: Dict[str, Any] = {  # TODO: replace Any with Union or overload
+        params: Dict[str, Any] = {
             "queryname": query_mapping[market],
             "market_run_id": market,
             "startdatetime": self._get_UTC_string(start),
@@ -257,7 +262,7 @@ class Atlas(Oasis):
 
         """Get pricing nodes
 
-        Get lost of pricing nodes and aggregated pricing nodes extant between
+        Get list of pricing nodes and aggregated pricing nodes extant between
         start and stop period
 
         Args:
@@ -281,7 +286,7 @@ class Atlas(Oasis):
 
         response = self.request(params)
 
-        return self.get_df(response)
+        return self.get_df(response, atlas=True)
 
 
 class SystemDemand(Oasis):
