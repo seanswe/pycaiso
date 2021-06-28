@@ -349,3 +349,79 @@ class SystemDemand(Oasis):
         resp = self.request(params)
 
         return self.get_df(resp)
+
+
+def get_lmps(
+    node: str,
+    start: datetime,
+    end: Optional[datetime] = None,
+    market: Optional[str] = "DAM",
+) -> pd.DataFrame:
+
+    """Get LMPs
+
+    Gets Locational Market Prices (LMPs) at node for a given pair of start and end dates
+
+    Args:
+        node (str): pricing node
+        start (datetime.datetime): start date, inclusive
+        end (datetime.datetime): end date, exclusive
+        market (str): market for prices; must be "DAM", "RTM", or "RTPD"
+
+    Returns:
+        (pandas.DataFrame): Pandas dataframe containing the LMPs for given period, market
+    """
+
+    oasis = Oasis()
+
+    if end is None:
+        end = start + timedelta(days=1)
+
+    oasis._validate_date_range(start, end)
+
+    QUERY_MAPPING: Dict[str, str] = {
+        "DAM": "PRC_LMP",
+        "RTM": "PRC_INTVL_LMP",
+        "RTPD": "PRC_RTPD_LMP",
+    }
+
+    COLUMNS: List[str] = [
+        "INTERVALSTARTTIME_GMT",
+        "INTERVALENDTIME_GMT",
+        "OPR_DT",
+        "OPR_HR",
+        "OPR_INTERVAL",
+        "NODE_ID_XML",
+        "NODE_ID",
+        "NODE",
+        "MARKET_RUN_ID",
+        "LMP_TYPE",
+        "XML_DATA_ITEM",
+        "PNODE_RESMRID",
+        "GRP_TYPE",
+        "POS",
+        "MW",
+        "GROUP",
+    ]
+
+    if market not in QUERY_MAPPING.keys():
+        raise ValueError("market must be 'DAM', 'RTM' or 'RTPD'")
+
+    params: Dict[str, Any] = {
+        "queryname": QUERY_MAPPING[market],
+        "market_run_id": market,
+        "startdatetime": oasis._get_UTC_string(start),
+        "enddatetime": oasis._get_UTC_string(end),
+        "version": 1,
+        "node": node,
+        "resultformat": 6,
+    }
+
+    resp: Response = oasis.request(params)
+
+    return oasis.get_df(
+        resp,
+        parse_dates=[2],
+        sort_values=["OPR_DT", "OPR_HR"],
+        reindex_columns=COLUMNS,
+    )
