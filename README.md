@@ -8,6 +8,12 @@ pycaiso currently supports the following reports and resultsets:
 2. System Demand
 3. Atlas
 
+## Install
+
+```python
+pip install pycaiso
+```
+
 ## Examples
 
 Get locational marginal prices (LMPs) in Day Ahead Market (DAM) for arbitrary Node and period:
