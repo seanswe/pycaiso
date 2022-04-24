@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=2,<4", "pandas", "requests"]
+requires = ["flit_core >=2,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.flit.metadata]
@@ -9,4 +9,5 @@ home-page = "https://github.com/seanswe/pycaiso"
 author-email = "seanswe@gmail.com"
 classifiers = [ "License :: OSI Approved :: MIT License",]
 description-file = "README.md"
+requires = ["requests", "pandas"]
 
