@@ -45,7 +45,7 @@ class Oasis:
         if error is not None:
             raise BadDateRangeError(error)
 
-    def request(self, params: Dict[str, Any]) -> Response:
+    def request(self, params: Dict[str, Any], timeout=15) -> Response:
         """Make http request
 
         Base method to get request at base_url
@@ -57,7 +57,7 @@ class Oasis:
             response: requests response object
         """
 
-        resp: Response = requests.get(self.base_url, params=params, timeout=15)
+        resp: Response = requests.get(self.base_url, params=params, timeout=timeout)
         resp.raise_for_status()
 
         headers: str = resp.headers["content-disposition"]
@@ -145,7 +145,7 @@ class Node(Oasis):
         return f"Node(node='{self.node}')"
 
     def get_lmps(
-        self, start: datetime, end: Optional[datetime] = None, market: str = "DAM"
+        self, start: datetime, end: Optional[datetime] = None, market: str = "DAM", timeout: int = 15
     ) -> pd.DataFrame:
         """Get LMPs
 
@@ -203,7 +203,7 @@ class Node(Oasis):
             "resultformat": 6,
         }
 
-        resp: Response = self.request(params)
+        resp: Response = self.request(params, timeout)
 
         return self.get_df(
             resp,
@@ -212,7 +212,7 @@ class Node(Oasis):
             reindex_columns=COLUMNS,
         )
 
-    def get_month_lmps(self, year: int, month: int) -> pd.DataFrame:
+    def get_month_lmps(self, year: int, month: int, market: str = "DAM", timeout: int = 15) -> pd.DataFrame:
 
         """Get LMPs for entire month
 
@@ -229,7 +229,7 @@ class Node(Oasis):
         start: datetime = datetime(year, month, 1)
         end: datetime = start + relativedelta(months=1)
 
-        return self.get_lmps(start, end)
+        return self.get_lmps(start, end, market, timeout)
 
     @classmethod
     def SP15(cls):
@@ -262,7 +262,7 @@ class Atlas(Oasis):
     def __init__(self):
         super().__init__()
 
-    def get_pnodes(self, start: datetime, end: datetime) -> pd.DataFrame:
+    def get_pnodes(self, start: datetime, end: datetime, timeout: int = 15) -> pd.DataFrame:
 
         """Get pricing nodes
 
@@ -288,7 +288,7 @@ class Atlas(Oasis):
             "resultformat": 6,
         }
 
-        response = self.request(params)
+        response = self.request(params, timeout)
 
         return self.get_df(response)
 
@@ -299,7 +299,7 @@ class SystemDemand(Oasis):
     def __init__(self):
         super().__init__()
 
-    def get_peak_demand_forecast(self, start: datetime, end: datetime) -> pd.DataFrame:
+    def get_peak_demand_forecast(self, start: datetime, end: datetime, timeout: int = 15) -> pd.DataFrame:
         """Get peak demand forecast
 
         Get peak demand forecasted between start and end dates
@@ -320,11 +320,11 @@ class SystemDemand(Oasis):
             "resultformat": 6,
         }
 
-        resp: Response = self.request(params)
+        resp: Response = self.request(params, timeout)
 
         return self.get_df(resp)
 
-    def get_demand_forecast(self, start: datetime, end: datetime) -> pd.DataFrame:
+    def get_demand_forecast(self, start: datetime, end: datetime, timeout: int = 15) -> pd.DataFrame:
 
         """Get demand forecast
 
@@ -346,7 +346,7 @@ class SystemDemand(Oasis):
             "resultformat": 6,
         }
 
-        resp = self.request(params)
+        resp = self.request(params, timeout)
 
         return self.get_df(resp)
 
@@ -356,6 +356,7 @@ def get_lmps(
     start: datetime,
     end: Optional[datetime] = None,
     market: Optional[str] = "DAM",
+    timeout: int = 15,
 ) -> pd.DataFrame:
 
     """Get LMPs
@@ -417,7 +418,7 @@ def get_lmps(
         "resultformat": 6,
     }
 
-    resp: Response = oasis.request(params)
+    resp: Response = oasis.request(params, timeout)
 
     return oasis.get_df(
         resp,
