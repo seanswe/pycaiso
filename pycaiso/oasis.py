@@ -320,11 +320,13 @@ class SystemDemand(Oasis):
             "resultformat": 6,
         }
 
+                
+                
         resp: Response = self.request(params)
 
         return self.get_df(resp)
 
-    def get_demand_forecast(self, start: datetime, end: datetime) -> pd.DataFrame:
+    def get_demand_forecast(self, start: datetime, end: datetime, market: str = "") -> pd.DataFrame:
 
         """Get demand forecast
 
@@ -345,7 +347,10 @@ class SystemDemand(Oasis):
             "version": 1,
             "resultformat": 6,
         }
-
+        if market:
+            params["market_run_id"]=market
+            if market == "RTM":
+                params["execution_type"]="RTD"
         resp = self.request(params)
 
         return self.get_df(resp)
