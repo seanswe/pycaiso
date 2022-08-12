@@ -292,11 +292,16 @@ class Atlas(Oasis):
 
         return self.get_df(response)
 
-
+AREAS = ["CA ISO-TAC",
+         "AZN"]
 class SystemDemand(Oasis):
     """System Demand"""
 
-    def __init__(self):
+    def __init__(self, area:str):
+        if area in AREAS:
+            self.area = area
+        else:
+            self.area = None
         super().__init__()
 
     def get_peak_demand_forecast(self, start: datetime, end: datetime) -> pd.DataFrame:
@@ -347,6 +352,9 @@ class SystemDemand(Oasis):
             "version": 1,
             "resultformat": 6,
         }
+        
+        if self.area:
+            params["tac_area_name"] = self.area
         if market:
             params["market_run_id"]=market
             if market == "RTM":
